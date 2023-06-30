@@ -1,6 +1,6 @@
 ---
 ## Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
-_commit: v1.3.3-52-g894831c
+_commit: v1.3.3-54-g28972bf
 _src_path: /Users/kamontat/Desktop/Personal/asdf-plugin-template
 app_desc: A simple zero-config tool to make locally trusted development certificates
 app_name: mkcert
@@ -30,7 +30,9 @@ plugin_author: Kamontat Chantrachirathumrong
 plugin_name: asdf-mkcert
 plugin_org: kc-workspace
 plugin_repo: https://github.com/kc-workspace/asdf-mkcert.git
-source_enabled: false
+source_enabled: true
+source_type: git
+source_url: https://github.com/FiloSottile/mkcert.git
 test_cmd_args: --version
 version_file_enabled: false
 version_prefix: v

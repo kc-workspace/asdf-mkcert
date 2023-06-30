@@ -22,7 +22,7 @@ __asdf_bin() {
   if [[ "$type" == "ref" ]]; then
     if command -v _kc_asdf_custom_download_source >/dev/null; then
       local source_url
-      source_url=""
+      source_url="https://github.com/FiloSottile/mkcert.git"
       source_url="$(kc_asdf_template "$source_url" "${vars[@]}")"
       kc_asdf_debug "$ns" "source link is %s" "$source_url"
       [ -z "$source_url" ] &&
