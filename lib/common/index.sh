@@ -23,9 +23,13 @@ source "${KC_ASDF_PLUGIN_PATH:?}/lib/common/internal.sh" || exit 1
 source "${KC_ASDF_PLUGIN_PATH:?}/lib/common/defaults.sh" || exit 1
 
 KC_ASDF_ADDON_LIST=(
+  "checksum"
+  "download"
   "github"
   "gpg"
   "help"
+  "install"
+  "system"
   "tags"
   "version"
 )

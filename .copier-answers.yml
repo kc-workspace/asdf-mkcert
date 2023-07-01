@@ -1,6 +1,6 @@
 ---
 ## Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
-_commit: 31ed5ea0fcfe0162a50601c08d7476444afd0357
+_commit: v1.3.3-59-gb483a82
 _src_path: /Users/kamontat/Desktop/Personal/asdf-plugin-template
 app_desc: A simple zero-config tool to make locally trusted development certificates
 app_name: mkcert
@@ -10,13 +10,13 @@ app_website: https://mkcert.dev/
 archive_enabled: false
 checksum_enabled: false
 custom_addon_yaml:
-    checksum: false
-    download: false
+    checksum: true
+    download: true
     github: true
     gpg: true
     help: true
-    install: false
-    system: false
+    install: true
+    system: true
     tags: true
     version: true
 custom_arch_enabled: true
