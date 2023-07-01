@@ -10,7 +10,7 @@ app_website: https://mkcert.dev/
 archive_enabled: false
 checksum_enabled: false
 custom_addon_yaml:
-    checksum: true
+    checksum: false
     download: true
     github: true
     gpg: true
