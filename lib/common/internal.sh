@@ -7,18 +7,25 @@
 ## e.g. `__asdf_load 'common' 'defaults'`
 __asdf_load() {
   local ns="load.internal"
-  local type="$1" name="$2"
-  local path="${KC_ASDF_PLUGIN_PATH:?}/${type}/${name}.sh"
+  local type="$1" name path error
+  local basepath="${KC_ASDF_PLUGIN_PATH:?}/lib/$type"
+  shift
 
-  if [ -f "$path" ]; then
-    kc_asdf_debug "$ns" "sourcing %s/%s (%s)" \
-      "$type" "$name" "$path"
-    # shellcheck source=/dev/null
-    source "$path"
-  else
-    kc_asdf_error "$ns" "file '%s' is missing" "$path"
-    return 1
-  fi
+  for name in "$@"; do
+    path="${basepath}/${name}.sh"
+    if [ -f "$path" ]; then
+      kc_asdf_debug "$ns" "sourcing %s/%s (%s)" \
+        "$type" "$name" "$path"
+      # shellcheck source=/dev/null
+      source "$path"
+    else
+      error=true
+      kc_asdf_error "$ns" "file '%s' is missing" "$path"
+      continue
+    fi
+  done
+
+  [ -z "$error" ]
 }
 
 ## Print log to stderr

@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
 
-__kc_asdf_is_ref() {
-  [[ "${ASDF_INSTALL_TYPE:?}" == "ref" ]]
-}
-__kc_asdf_is_ver() {
-  [[ "${ASDF_INSTALL_TYPE:?}" == "version" ]]
-}
+kc_asdf_load_addon "install"
 
 ## variables:
 ##   - ASDF_INSECURE - disable checksum check
@@ -40,13 +35,13 @@ __asdf_bin() {
     fi
   fi
 
-  if __kc_asdf_is_ref; then
+  if kc_asdf_is_ref; then
     url="https://github.com/FiloSottile/mkcert.git"
     url="$(kc_asdf_template "$url" "${vars[@]}")"
     command -v _kc_asdf_custom_source_url >/dev/null &&
       kc_asdf_debug "$ns" "developer custom source link" &&
       url="$(_kc_asdf_custom_source_url "$version" "$url")"
-  elif __kc_asdf_is_ver; then
+  elif kc_asdf_is_ver; then
     url="https://github.com/FiloSottile/mkcert/releases/download/v{version}/mkcert-v{version}-{os}-{arch}"
     url="$(kc_asdf_template "$url" "${vars[@]}")"
     command -v _kc_asdf_custom_download_url >/dev/null &&

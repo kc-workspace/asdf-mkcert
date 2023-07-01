@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+kc_asdf_load_addon "help"
+
 __asdf_bin_help_deps_add() {
   for dep in "$@"; do
     echo "$dep"

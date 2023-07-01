@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
 
-__kc_asdf_is_ref() {
-  [[ "${ASDF_INSTALL_TYPE:?}" == "ref" ]]
-}
-__kc_asdf_is_ver() {
-  [[ "${ASDF_INSTALL_TYPE:?}" == "version" ]]
-}
+kc_asdf_load_addon "install"
 
 __asdf_bin() {
   # shellcheck disable=SC2034
@@ -23,7 +18,7 @@ __asdf_bin() {
   kc_asdf_debug "$ns" "download location is %s" "$indir"
   kc_asdf_debug "$ns" "install location is %s" "$outdir"
 
-  if __kc_asdf_is_ref; then
+  if kc_asdf_is_ref; then
     if command -v _kc_asdf_custom_source_build >/dev/null; then
       local tmp="$PWD"
       cd "$indir" || return 1
@@ -37,7 +32,7 @@ __asdf_bin() {
         "_kc_asdf_custom_source_build()"
       return 1
     fi
-  elif __kc_asdf_is_ver; then
+  elif kc_asdf_is_ver; then
     kc_asdf_step "install" "$outdir" \
       kc_asdf_transfer 'copy' "$indir" "$outdir" ||
       return 1

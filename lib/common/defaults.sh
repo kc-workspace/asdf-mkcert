@@ -113,22 +113,6 @@ kc_asdf_fetch_file() {
   unset CURL_OPTIONS WGET_OPTIONS
 }
 
-## Parse version to major, minor and patch version
-## e.g. `read -r major minor patch <<< "$(kc_asdf_parse_version "$version")"`
-kc_asdf_parse_version() {
-  local version="$1"
-  echo "${version//./ }"
-}
-
-## Loading common libraries
-## e.g. `kc_asdf_load_features 'tags'`
-kc_asdf_load_features() {
-  local name
-  for name in "$@"; do
-    __asdf_load "features" "$name"
-  done
-}
-
 ## Fetch data from url
 ## usage: `kc_asdf_fetch https://google.com`
 ## variables:

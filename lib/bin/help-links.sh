@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+kc_asdf_load_addon "help"
+
 __asdf_bin_help_link_printf() {
   local name="${1:?}" url="${2:?}"
   printf "%-12s : %s\n" \

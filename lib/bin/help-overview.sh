@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+kc_asdf_load_addon "help"
+
 __asdf_bin() {
   # shellcheck disable=SC2034
   local ns="$1"
