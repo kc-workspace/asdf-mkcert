@@ -31,12 +31,6 @@ kc_asdf_debug() {
     __asdf_log "DBG" "$@"
 }
 
-## Print help message header
-## usage: `kc_asdf_help_header 'Environment'`
-kc_asdf_help_header() {
-  printf "# %s\n" "$1"
-}
-
 ## Create start action to client
 ## usage: `kc_asdf_step '<action_verb>' '<message>' $cmd`
 kc_asdf_step() {
@@ -126,6 +120,15 @@ kc_asdf_parse_version() {
   echo "${version//./ }"
 }
 
+## Loading common libraries
+## e.g. `kc_asdf_load_features 'tags'`
+kc_asdf_load_features() {
+  local name
+  for name in "$@"; do
+    __asdf_load "features" "$name"
+  done
+}
+
 ## Fetch data from url
 ## usage: `kc_asdf_fetch https://google.com`
 ## variables:
@@ -181,50 +184,92 @@ kc_asdf_fetch() {
   fi
 }
 
-## Extract compress file
-## usage: `kc_asdf_extract /tmp/file.tar.gz /tmp/file`
+## Git clone with branch selection support
+## usage: `kc_asdf_git_clone '<git-repo>' '/tmp/repo' [main]`
+kc_asdf_git_clone() {
+  local repo="$1" location="$2" branch="${3:-}"
+  local args=(clone)
+
+  ## Make clone quiet
+  args+=(--quiet --config "advice.detachedHead=false")
+  ## Clone only single branch
+  args+=(--single-branch)
+  [ -n "$branch" ] &&
+    args+=(--branch "$branch")
+  args+=("$repo" "$location")
+
+  kc_asdf_exec git "${args[@]}"
+}
+
+## Extract compress file and move only internal path (if exist)
+## usage: `kc_asdf_extract /tmp/file.tar.gz /tmp/file [internal/path]`
 kc_asdf_extract() {
-  local input="$1" output="$2"
+  local input="$1" output="$2" internal="$3" tmppath
   local ext="${input##*.}"
 
+  if [ -n "$internal" ]; then
+    tmppath="$(kc_asdf_temp_dir)"
+  else
+    tmppath="$output"
+  fi
+
   if [[ "$ext" == "zip" ]]; then
-    kc_asdf_exec unzip -qo "$input" -d "$output"
+    kc_asdf_exec unzip -qo "$input" -d "$tmppath" ||
+      return 1
   else
     kc_asdf_exec tar -xzf \
       "$input" \
-      -C "$output" \
-      --strip-components ""
+      -C "$tmppath" \
+      --strip-components "" ||
+      return 1
+  fi
+
+  if [ -n "$internal" ]; then
+    kc_asdf_transfer "move" "$tmppath" "$output"
+    return $?
   fi
 }
 
-## Unpack package file
-## usage: `kc_asdf_unpack /tmp/file.pkg /tmp/file`
+## Unpack package file and move only internal path (if exist)
+## usage: `kc_asdf_unpack /tmp/file.pkg /tmp/file [internal/path]`
 kc_asdf_unpack() {
   local ns="unpack.defaults"
-  local input="$1" output="$2"
+  local input="$1" output="$2" internal="$3" tmppath
+  if [ -n "$internal" ]; then
+    tmppath="$(kc_asdf_temp_dir)"
+  else
+    tmppath="$output"
+  fi
 
   ! command -v pkgutil >/dev/null &&
     kc_asdf_error "$ns" "cannot package because 'pkgutil' is missing" &&
     return 1
 
-  kc_asdf_debug "$ns" "verifying package signature of %s" "$input"
-  local expected="signed by a developer certificate issued by Apple for distribution"
-  local signature actual
-  signature="$(kc_asdf_exec pkgutil --check-signature "$input")"
-  actual="$(echo "$signature" | grep -E '^\s+Status: ' | sed 's/[ ]*Status: //')"
-
-  if [[ "$expected" != "$actual" ]]; then
-    kc_asdf_error "$ns" "invalid pkg signature, please recheck (%s)" \
-      "$input"
-    echo "$signature" >&2
-    return 1
+  if [ -z "$ASDF_INSECURE" ]; then
+    kc_asdf_debug "$ns" "verifying package signature of %s" "$input"
+    local expected="signed by a developer certificate issued by Apple for distribution"
+    local signature actual
+    signature="$(kc_asdf_exec pkgutil --check-signature "$input")"
+    actual="$(echo "$signature" | grep -E '^\s+Status: ' | sed 's/[ ]*Status: //')"
+    if [[ "$expected" != "$actual" ]]; then
+      kc_asdf_error "$ns" "invalid pkg signature, please recheck (%s)" \
+        "$input"
+      echo "$signature" >&2
+      return 1
+    fi
   fi
 
-  [ -d "$output" ] &&
-    kc_asdf_debug "$ns" "delete output directory first" &&
-    rm -r "$output"
+  [ -d "$tmppath" ] &&
+    kc_asdf_debug "$ns" "delete tmppath directory first" &&
+    rm -r "$tmppath"
   kc_asdf_exec pkgutil --expand-full \
-    "$input" "$output"
+    "$input" "$tmppath" ||
+    return 1
+
+  if [ -n "$internal" ]; then
+    kc_asdf_transfer "move" "$tmppath" "$output"
+    return $?
+  fi
 }
 
 ## Transfer input to output based on input mode
@@ -359,4 +404,13 @@ kc_asdf_temp_file() {
 ## usage: `kc_asdf_temp_dir`
 kc_asdf_temp_dir() {
   mktemp -d
+}
+
+## Check if input is directory and contains some files
+## usage: `kc_asdf_present_dir /tmp`
+kc_asdf_present_dir() {
+  local directory="$1"
+  # shellcheck disable=SC2010
+  [ -d "$directory" ] &&
+    ls -A1q "$directory" | grep -q .
 }

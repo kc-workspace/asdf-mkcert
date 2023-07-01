@@ -3,30 +3,22 @@
 ## All functions are internally use only
 ## Subject to change
 
-## source bin lib from `lib` directory
-## usage: `__asdf_source_bin_lib \
-##           "${KC_ASDF_PLUGIN_PATH:?}" \
-##           "${KC_ASDF_PLUGIN_ENTRY_NAME//./-}"`
-__asdf_source_bin_lib() {
-  local ns="source.internal"
-  local base="$1" name="$2"
-  local path="${base}/lib/bin/${name}.sh"
+## Loading lib utilities
+## e.g. `__asdf_load 'common' 'defaults'`
+__asdf_load() {
+  local ns="load.internal"
+  local type="$1" name="$2"
+  local path="${KC_ASDF_PLUGIN_PATH:?}/${type}/${name}.sh"
+
   if [ -f "$path" ]; then
-    kc_asdf_debug "$ns" "sourcing bin:lib (%s)" "$path"
+    kc_asdf_debug "$ns" "sourcing %s/%s (%s)" \
+      "$type" "$name" "$path"
     # shellcheck source=/dev/null
     source "$path"
   else
-    kc_asdf_debug "$ns" "cannot found bin:lib to source (%s)" \
-      "$path"
+    kc_asdf_error "$ns" "file '%s' is missing" "$path"
+    return 1
   fi
-}
-
-## exit with error when input bin is missing default command
-## usage: `__asdf_bin_unknown 'download'`
-__asdf_bin_unknown() {
-  local ns="bin.internal"
-  kc_asdf_error "$ns" "missing default for 'bin/%s', kc_asdf_main() is require" "$1"
-  exit 1
 }
 
 ## Print log to stderr

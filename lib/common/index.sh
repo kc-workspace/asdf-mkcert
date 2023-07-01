@@ -2,11 +2,10 @@
 ## https://asdf-vm.com/plugins/create.html#environment-variables-overview
 
 # shellcheck source-path=SCRIPTDIR/internal.sh
-source "${KC_ASDF_PLUGIN_PATH:?}/lib/common/internal.sh"
-# shellcheck source-path=SCRIPTDIR/defaults.sh
-source "${KC_ASDF_PLUGIN_PATH:?}/lib/common/defaults.sh"
-# shellcheck source-path=SCRIPTDIR/main.sh
-source "${KC_ASDF_PLUGIN_PATH:?}/lib/common/main.sh"
+source "${KC_ASDF_PLUGIN_PATH:?}/lib/common/internal.sh" || exit 1
+
+__asdf_load "common" "defaults"
+__asdf_load "common" "main"
 
 ## Paths
 KC_ASDF_RES_PATH="${KC_ASDF_PLUGIN_PATH:?}/res"
