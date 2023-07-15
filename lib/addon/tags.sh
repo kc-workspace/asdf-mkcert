@@ -3,7 +3,7 @@
 ## List all tags from Git
 ## usage: `output_file="$(kc_asdf_tags_list)"`
 kc_asdf_tags_list() {
-  local ns="tags-list.main"
+  local ns="tags-list.addon"
   local repo="$KC_ASDF_APP_REPO"
   local output
   output="$(kc_asdf_temp_file)"
@@ -23,7 +23,7 @@ kc_asdf_tags_list() {
 ## Filter only stable tags from tags list
 ## usage: `output_file="$(kc_asdf_tags_stable "$input_file")"`
 kc_asdf_tags_stable() {
-  local ns="tags-stable.main"
+  local ns="tags-stable.addon"
   local input="$1" output
   output="$(kc_asdf_temp_file)"
   local query='(-src|-dev|-latest|-stm|[-\.]rc|-alpha|-beta|[-\.]pre|-next|snapshot|master)'
@@ -42,7 +42,7 @@ kc_asdf_tags_stable() {
 ## Sorting tags using semver
 ## usage: `output_file="$(kc_asdf_tags_sort "$input_file")"`
 kc_asdf_tags_sort() {
-  local ns="tags-sort.main"
+  local ns="tags-sort.addon"
   local input="$1" output
   output="$(kc_asdf_temp_file)"
 
@@ -62,7 +62,7 @@ kc_asdf_tags_sort() {
 ## Filter only tag with input regex
 ## usage: `output_file="$(kc_asdf_tags_only "$input_file" ^v)"`
 kc_asdf_tags_only() {
-  local ns="tags-only.main"
+  local ns="tags-only.addon"
   local input="$1" output
   output="$(kc_asdf_temp_file)"
   local regex="${2:-^\\s*v}"
@@ -82,7 +82,7 @@ kc_asdf_tags_only() {
 ## Formatting tags by remove input regex
 ## usage: `output_file="$(kc_asdf_tags_format "$input_file" ^v)"`
 kc_asdf_tags_format() {
-  local ns="tags-format.main"
+  local ns="tags-format.addon"
   local input="$1" output
   output="$(kc_asdf_temp_file)"
   local regex="${2:-^\\s*v}"

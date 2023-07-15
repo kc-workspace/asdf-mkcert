@@ -5,7 +5,7 @@
 ## variable:
 ##   - ASDF_OVERRIDE_OS for override arch
 kc_asdf_get_os() {
-  local ns="os.main"
+  local ns="os.addon"
   local os="${ASDF_OVERRIDE_OS:-}"
   if [ -n "$os" ]; then
     kc_asdf_warn "$ns" "user overriding OS to '%s'" "$os"
@@ -45,7 +45,7 @@ kc_asdf_is_linux() {
 ## variable:
 ##   - ASDF_OVERRIDE_ARCH for override arch
 kc_asdf_get_arch() {
-  local ns="arch.main"
+  local ns="arch.addon"
   local arch="${ASDF_OVERRIDE_ARCH:-}"
   if [ -n "$arch" ]; then
     kc_asdf_warn "$ns" "user overriding arch to '%s'" "$arch"

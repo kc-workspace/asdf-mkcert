@@ -17,9 +17,11 @@ if command -v _kc_asdf_custom_env >/dev/null; then
   fi
 fi
 
-__asdf_load "bin" "${KC_ASDF_PLUGIN_ENTRY_NAME//./-}"
+## This load is optional.
+## If load failed, just print error message and continue
+__asdf_load "bin" "${KC_ASDF_PLUGIN_ENTRY_NAME//./-}" || printf ''
 
-kc_asdf_debug "$ns" "executing %s with [%s]" \
+kc_asdf_debug "$ns" "starting %s with [%s]" \
   "$KC_ASDF_PLUGIN_ENTRY_NAME" "$*"
 if command -v kc_asdf_main >/dev/null; then
   kc_asdf_debug "$ns" "use main function instead" \

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 ## Get latest tags from GitHub
-## usage: `kc_asdf_gh_latest`
-kc_asdf_gh_latest() {
-  local ns="gh-latest.main"
+## usage: `kc_asdf_github_latest`
+kc_asdf_github_latest() {
+  local ns="gh-latest.addon"
   local repo="${KC_ASDF_APP_REPO:?}"
   local url="" version=""
 

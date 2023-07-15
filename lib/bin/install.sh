@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-kc_asdf_load_addon "install"
+kc_asdf_load_addon "install" \
+  "system" \
+  "version"
 
 __asdf_bin() {
   # shellcheck disable=SC2034
@@ -11,8 +13,8 @@ __asdf_bin() {
   local version="${ASDF_INSTALL_VERSION:?}"
   local indir="${ASDF_DOWNLOAD_PATH:?}"
   local outdir="${ASDF_INSTALL_PATH:?}"
+  # shellcheck disable=SC2034
   local concurrency="${ASDF_CONCURRENCY:-1}"
-
   kc_asdf_debug "$ns" "installing %s %s %s" \
     "$KC_ASDF_APP_NAME" "$type" "$version"
   kc_asdf_debug "$ns" "download location is %s" "$indir"
@@ -37,11 +39,20 @@ __asdf_bin() {
       kc_asdf_transfer 'copy' "$indir" "$outdir" ||
       return 1
     ## Transfer files recording install mapping
-    local vars install_map
+    local install_map
     install_map=(
       "mkcert:bin/mkcert"
     )
-    vars=("os=$KC_ASDF_OS" "arch=$KC_ASDF_ARCH" "version=$version")
+    local vars=("version=$version")
+    [ -n "${KC_ASDF_OS:-}" ] && vars+=("os=${KC_ASDF_OS:-}")
+    [ -n "${KC_ASDF_ARCH:-}" ] && vars+=("arch=${KC_ASDF_ARCH:-}")
+    if command -v kc_asdf_version_parser >/dev/null; then
+      local major minor patch
+      read -r major minor patch <<<"$(kc_asdf_version_parser "$version")"
+      vars+=("major_version=$major" "minor_version=$minor" "patch_version=$patch")
+    fi
+    kc_asdf_debug "$ns" "template variables are '%s'" "${vars[*]}"
+
     local transfer_method="move"
     local raw key value
     for raw in "${install_map[@]}"; do
@@ -51,7 +62,6 @@ __asdf_bin() {
         kc_asdf_transfer "$transfer_method" "$outdir/$key" "$outdir/$value"
     done
   fi
-
   ## Chmod all bin files
   local bin bins=(bin)
   local file outpath
@@ -72,7 +82,7 @@ __asdf_bin() {
   kc_asdf_debug "$ns" "list '%s': [%s]" \
     "$outdir" "$(ls "$outdir" | xargs echo)"
   for bin in "${bins[@]}"; do
-      outpath="$outdir/$bin"
+    outpath="$outdir/$bin"
     if kc_asdf_present_dir "$outpath"; then
       # shellcheck disable=SC2011
       kc_asdf_debug "$ns" "list '%s': [%s]" \

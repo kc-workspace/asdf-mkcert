@@ -1,24 +1,29 @@
 ---
 ## Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
-_commit: f55eb93da7cfd4b3c28efd07c483fe7fada6e28e
-_src_path: /Users/kamontat/Desktop/Personal/asdf-plugin-template
-app_desc: A simple zero-config tool to make locally trusted development certificates
-app_name: mkcert
-app_repo: https://github.com/FiloSottile/mkcert
-app_type: git
-app_website: https://mkcert.dev/
-archive_enabled: false
-checksum_enabled: false
-custom_addon_yaml:
+_commit: v2.0.1
+_src_path: gh:kc-workspace/asdf-plugin-template.git
+addon_yaml:
+    archive: false
     checksum: false
     download: true
+    fetch: true
+    git: true
     github: true
-    gpg: true
+    gpg: false
     help: true
     install: true
+    package: false
+    python: false
     system: true
     tags: true
     version: true
+app_desc: A simple zero-config tool to make locally trusted development certificates
+app_name: mkcert
+app_repo: https://github.com/FiloSottile/mkcert
+app_type: standalone
+app_website: https://mkcert.dev/
+archive_enabled: false
+checksum_enabled: false
 custom_arch_enabled: true
 custom_arch_yaml:
     aarch64*: arm64

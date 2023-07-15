@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
-kc_asdf_load_addon "install"
+kc_asdf_load_addon "download" "install" \
+  "fetch" \
+  "system" \
+  "version" \
+  "git"
 
 ## variables:
 ##   - ASDF_INSECURE - disable checksum check
@@ -13,12 +17,22 @@ __asdf_bin() {
   local version="${ASDF_INSTALL_VERSION:?}"
   kc_asdf_debug "$ns" "downloading %s %s %s" \
     "$KC_ASDF_APP_NAME" "$type" "$version"
+  command -v _kc_asdf_custom_version >/dev/null &&
+    kc_asdf_debug "$ns" "developer defined custom version function" &&
+    version="$(_kc_asdf_custom_version "$version")"
 
   local outdir="${ASDF_DOWNLOAD_PATH:?}" outfile outpath
   local tmpdir tmpfile tmppath
   tmpdir="$(kc_asdf_temp_dir)"
-  local vars
-  vars=("os=$KC_ASDF_OS" "arch=$KC_ASDF_ARCH" "version=$version")
+  local vars=("version=$version")
+  [ -n "${KC_ASDF_OS:-}" ] && vars+=("os=${KC_ASDF_OS:-}")
+  [ -n "${KC_ASDF_ARCH:-}" ] && vars+=("arch=${KC_ASDF_ARCH:-}")
+  if command -v kc_asdf_version_parser >/dev/null; then
+    local major minor patch
+    read -r major minor patch <<<"$(kc_asdf_version_parser "$version")"
+    vars+=("major_version=$major" "minor_version=$minor" "patch_version=$patch")
+  fi
+  kc_asdf_debug "$ns" "template variables are '%s'" "${vars[*]}"
   local url mode
 
   ## If output directory is not empty, mean it cached
@@ -70,15 +84,12 @@ __asdf_bin() {
       kc_asdf_fetch_file "$url" "$tmppath" ||
       return 1
 
-    
-
     if [[ "$mode" == "file" ]]; then
       outfile="$KC_ASDF_APP_NAME"
       outpath="$outdir/$outfile"
       kc_asdf_step "transfer" "$outpath" \
         kc_asdf_transfer "copy" "$tmppath" "$outpath" ||
         return 1
-      
     else
       kc_asdf_error "$ns" "invalid download mode name '%s'" "$mode"
       return 1

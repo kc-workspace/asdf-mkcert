@@ -53,6 +53,17 @@ kc_asdf_exec() {
   "$@"
 }
 
+## Execute input command if exist, or ignore
+## usage: `kc_asdf_optional echo 'run'`
+kc_asdf_optional() {
+  if ! command -v "$1" >/dev/null; then
+    kc_asdf_debug "optional.defaults" "command %s missing, silently ignored" \
+      "$1"
+  fi
+
+  kc_asdf_exec "$@"
+}
+
 ## Run input command with dry-run support
 ## usage: `kc_asdf_run echo 'run'`
 ## variables:
@@ -67,192 +78,22 @@ kc_asdf_run() {
   "$@"
 }
 
-## Fetch redirected location from url
-## e.g. `kc_asdf_fetch_location https://google.com`
-kc_asdf_fetch_location() {
-  local tmpfile
-  tmpfile="$(kc_asdf_temp_file)"
-  export CURL_OPTIONS=(
-    --head
-    --write-out "%{url_effective}"
-    --output "/dev/null"
-  )
-  export WGET_OPTIONS=(
-    --server-response
-    --spider
-    --output-file "$tmpfile"
-  )
-
-  if ! kc_asdf_fetch "$1"; then
-    unset CURL_OPTIONS WGET_OPTIONS
-    return 1
-  elif [ -f "$tmpfile" ]; then
-    sed -n -e "s|^[ ]*Location: *||p" <"$tmpfile" |
-      tail -n1 &&
-      rm "$tmpfile"
-  fi
-
-  unset CURL_OPTIONS WGET_OPTIONS
-}
-
-## Download file from input url
-## e.g. `kc_asdf_fetch_file https://google.com /tmp/index.html`
-kc_asdf_fetch_file() {
-  local url="$1" filename="$2"
-  export CURL_OPTIONS=(
-    --output "$filename"
-  )
-  export WGET_OPTIONS=(
-    --output-file "$filename"
-  )
-
-  if ! kc_asdf_fetch "$url"; then
-    unset CURL_OPTIONS WGET_OPTIONS
-    return 1
-  fi
-  unset CURL_OPTIONS WGET_OPTIONS
-}
-
-## Fetch data from url
-## usage: `kc_asdf_fetch https://google.com`
-## variables:
-##   - CURL_OPTIONS=() for curl options
-##   - WGET_OPTIONS=() for wget options
-##   - GITHUB_API_TOKEN for authentication
-kc_asdf_fetch() {
-  local ns="fetch.defaults"
-  local url="$1"
-  local cmd="" options=()
-
-  local token=""
-  if [[ "$url" =~ ^https://github.com ]]; then
-    token="${GITHUB_API_TOKEN:-}"
-    [ -z "$token" ] && token="${GITHUB_TOKEN:-}"
-    [ -z "$token" ] && token="${GH_TOKEN:-}"
-  fi
-
-  local max_redirs=10
-
-  if command -v "curl" >/dev/null; then
-    cmd="curl"
-    options+=(
-      --fail
-      --silent
-      --show-error
-      --location
-      --max-redirs "$max_redirs"
-    )
-    [ -n "${CURL_OPTIONS:-}" ] &&
-      options+=("${CURL_OPTIONS[@]}")
-    [ -n "$token" ] &&
-      options+=(--header "Authorization: token $token")
-  elif command -v "wget" >/dev/null; then
-    cmd="wget"
-    options+=(
-      --quiet
-      --max-redirect "$max_redirs"
-    )
-    [ -n "${WGET_OPTIONS:-}" ] &&
-      options+=("${WGET_OPTIONS[@]}")
-    [ -n "$token" ] &&
-      options+=(--header "Authorization: token $token")
-  fi
-
-  [ -z "$cmd" ] &&
-    kc_asdf_error "$ns" "fetch command not found (e.g. curl, wget)" &&
-    return 1
-
-  if ! kc_asdf_exec "$cmd" "${options[@]}" "$url"; then
-    kc_asdf_error "$ns" "fetching %s failed" "$url"
-    return 1
-  fi
-}
-
-## Git clone with branch selection support
-## usage: `kc_asdf_git_clone '<git-repo>' '/tmp/repo' [main]`
-kc_asdf_git_clone() {
-  local repo="$1" location="$2" branch="${3:-}"
-  local args=(clone)
-
-  ## Make clone quiet
-  args+=(--quiet --config "advice.detachedHead=false")
-  ## Clone only single branch
-  args+=(--single-branch)
-  [ -n "$branch" ] &&
-    args+=(--branch "$branch")
-  args+=("$repo" "$location")
-
-  kc_asdf_exec git "${args[@]}"
-}
-
-## Extract compress file and move only internal path (if exist)
-## usage: `kc_asdf_extract /tmp/file.tar.gz /tmp/file [internal/path]`
-kc_asdf_extract() {
-  local input="$1" output="$2" internal="$3" tmppath
-  local ext="${input##*.}"
-
-  if [ -n "$internal" ]; then
-    tmppath="$(kc_asdf_temp_dir)"
-  else
-    tmppath="$output"
-  fi
-
-  if [[ "$ext" == "zip" ]]; then
-    kc_asdf_exec unzip -qo "$input" -d "$tmppath" ||
-      return 1
-  else
-    kc_asdf_exec tar -xzf \
-      "$input" \
-      -C "$tmppath" \
-      --strip-components "" ||
-      return 1
-  fi
-
-  if [ -n "$internal" ]; then
-    kc_asdf_transfer "move" "$tmppath" "$output"
-    return $?
-  fi
-}
-
-## Unpack package file and move only internal path (if exist)
-## usage: `kc_asdf_unpack /tmp/file.pkg /tmp/file [internal/path]`
-kc_asdf_unpack() {
-  local ns="unpack.defaults"
-  local input="$1" output="$2" internal="$3" tmppath
-  if [ -n "$internal" ]; then
-    tmppath="$(kc_asdf_temp_dir)"
-  else
-    tmppath="$output"
-  fi
-
-  ! command -v pkgutil >/dev/null &&
-    kc_asdf_error "$ns" "cannot package because 'pkgutil' is missing" &&
-    return 1
-
-  if [ -z "$ASDF_INSECURE" ]; then
-    kc_asdf_debug "$ns" "verifying package signature of %s" "$input"
-    local expected="signed by a developer certificate issued by Apple for distribution"
-    local signature actual
-    signature="$(kc_asdf_exec pkgutil --check-signature "$input")"
-    actual="$(echo "$signature" | grep -E '^\s+Status: ' | sed 's/[ ]*Status: //')"
-    if [[ "$expected" != "$actual" ]]; then
-      kc_asdf_error "$ns" "invalid pkg signature, please recheck (%s)" \
-        "$input"
-      echo "$signature" >&2
-      return 1
+## Loading input addon
+## usage: `kc_asdf_load_addon 'system'`
+kc_asdf_load_addon() {
+  local ns="load-addon.defaults"
+  local name loaded=()
+  for name in "$@"; do
+    if [[ "$KC_ASDF_ADDON_LIST" =~ $name ]]; then
+      kc_asdf_debug "$ns" "'%s' addon has been loaded, SKIPPED" \
+        "$name"
+    else
+      __asdf_load "addon" "$name"
+      loaded+=("$name")
     fi
-  fi
-
-  [ -d "$tmppath" ] &&
-    kc_asdf_debug "$ns" "delete tmppath directory first" &&
-    rm -r "$tmppath"
-  kc_asdf_exec pkgutil --expand-full \
-    "$input" "$tmppath" ||
-    return 1
-
-  if [ -n "$internal" ]; then
-    kc_asdf_transfer "move" "$tmppath" "$output"
-    return $?
+  done
+  if [ "${#loaded[@]}" -gt 0 ]; then
+    KC_ASDF_ADDON_LIST="$KC_ASDF_ADDON_LIST ${loaded[*]}"
   fi
 }
 
@@ -343,23 +184,6 @@ kc_asdf_template() {
     template="${template//\{$key\}/$value}"
   done
   printf "%s" "$template"
-}
-
-## Validate commands must exist;
-## otherwise, it will exit with error
-## usage: `kc_asdf_require_commands 'java'`
-kc_asdf_require_commands() {
-  local ns="req-cmd.defaults"
-
-  kc_asdf_debug "$ns" "current plugins requires [%s] commands" \
-    "$*"
-  for cmd in "$@"; do
-    if ! command -v "$cmd" >/dev/null; then
-      kc_asdf_error "$ns" "requires '%s' command but missing" \
-        "$cmd"
-      exit 1
-    fi
-  done
 }
 
 ## Check enabled feature
