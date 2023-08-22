@@ -51,7 +51,7 @@ __asdf_bin() {
   fi
 
   if kc_asdf_is_ref; then
-    url="https://github.com/FiloSottile/mkcert.git"
+    url="${ASDF_OVERRIDE_REF_REPO:-https://github.com/FiloSottile/mkcert.git}"
     url="$(kc_asdf_template "$url" "${vars[@]}")"
     command -v _kc_asdf_custom_source_url >/dev/null &&
       kc_asdf_debug "$ns" "developer custom source link" &&
@@ -71,7 +71,11 @@ __asdf_bin() {
   tmpfile="${url##*/}"
   mode="$(kc_asdf_download_mode "$tmpfile")"
   kc_asdf_debug "$ns" "download mode is %s" "$mode"
-  if [[ "$mode" == "git" ]]; then
+  if [[ "$mode" == "custom" ]]; then
+    kc_asdf_step "custom" "custom download mode" \
+      _kc_asdf_custom_source_download "$version" "$outdir" ||
+      return 1
+  elif [[ "$mode" == "git" ]]; then
     kc_asdf_debug "$ns" "cloning '%s' to '%s'" \
       "$url" "$outdir"
     kc_asdf_step "git-clone" "$url" \

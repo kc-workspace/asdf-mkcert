@@ -14,8 +14,7 @@ _kc_asdf_custom_source_build() {
   local version="$1" output="$2"
   local concurrency="$3"
 
-  kc_asdf_require_commands "go"
-
+  kc_asdf_commands "go"
   go build \
     -p "$concurrency" -o "$output/bin/$KC_ASDF_APP_NAME" \
     -ldflags "-X main.Version=dev:$version"
