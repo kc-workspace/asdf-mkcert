@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/kc-workspace/asdf-mkcert/compare/v1.0.0...v1.0.1) (2023-12-03)
+
+
+### Improvements
+
+* update plugin from template [autocommit] ([dfb8612](https://github.com/kc-workspace/asdf-mkcert/commit/dfb86124a205d0b35b0eadc45eedce483636bb4b))
+
 ## 1.0.0 (2023-11-06)
 
 
